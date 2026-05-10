@@ -1,4 +1,7 @@
 # Module 14 — Improving Quality, Security & Performance (CI/CD)
+<!-- Sonar Cloud image path -->
+[![Screenshot-35.png](https://i.postimg.cc/d0fLBLCZ/Screenshot-35.png)](https://postimg.cc/bGQyYY3q)
+---
 
 [![Quality Gate Status](https://sonarcloud.io/api/project_badges/measure?project=coderrony_improving-quality&metric=alert_status)](https://sonarcloud.io/summary/new_code?id=coderrony_improving-quality)
 
