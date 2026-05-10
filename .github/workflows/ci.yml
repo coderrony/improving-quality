@@ -1,0 +1,118 @@
+# CI: tests, build, SonarCloud, Trivy (fs + image), OPA policy checks.
+name: CI
+
+on:
+  push:
+    branches: [main, master]
+  pull_request:
+    branches: [main, master]
+
+permissions:
+  contents: read
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: react-frontend
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Install dependencies
+        run: npm install
+
+      - name: Lint
+        run: npm run lint
+
+      - name: Unit tests + coverage
+        run: npm run test:coverage
+
+      - name: Production build
+        run: npm run build
+        env:
+          # Repository secret (optional): API base URL baked into the SPA at build time.
+          VITE_API_URL: ${{ secrets.VITE_API_URL }}
+          VITE_ENV: ci
+
+      - uses: actions/upload-artifact@v4
+        name: Upload LCOV for SonarCloud
+        with:
+          name: coverage-lcov
+          path: react-frontend/coverage/lcov.info
+
+  sonarcloud:
+    needs: test
+    runs-on: ubuntu-latest
+    if: github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - uses: actions/download-artifact@v4
+        with:
+          name: coverage-lcov
+          path: react-frontend/coverage
+
+      - name: SonarCloud Scan
+        uses: SonarSource/sonarqube-scan-action@v4
+        env:
+          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+  security-scan:
+    needs: test
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Trivy filesystem scan
+        uses: aquasecurity/trivy-action@v0.29.0
+        with:
+          scan-type: fs
+          scan-ref: ./react-frontend
+          severity: CRITICAL,HIGH,MEDIUM
+          exit-code: '0'
+          format: table
+
+      - name: Build Docker image for image scan
+        run: docker build -t todo-frontend:ci ./react-frontend
+
+      - name: Trivy image scan
+        uses: aquasecurity/trivy-action@v0.29.0
+        with:
+          scan-type: image
+          image-ref: todo-frontend:ci
+          severity: CRITICAL,HIGH,MEDIUM
+          exit-code: '0'
+          format: table
+
+  opa-policy:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install OPA
+        run: |
+          curl -sSL -o opa https://github.com/open-policy-agent/opa/releases/download/v0.69.0/opa_linux_amd64_static
+          chmod +x opa
+          sudo mv opa /usr/local/bin/
+
+      - name: Bad Deployment must violate (:latest)
+        run: |
+          c=$(opa eval -d policies/disallow_latest.rego -i policy-fixtures/deployment-bad.json \
+            "count(data.kubernetes.images.deny)" --format=raw | tr -d '\r')
+          echo "Deny rule matches (expect >= 1): $c"
+          test "$c" -ge 1
+
+      - name: Good Deployment must pass (pinned tag)
+        run: |
+          c=$(opa eval -d policies/disallow_latest.rego -i policy-fixtures/deployment-good.json \
+            "count(data.kubernetes.images.deny)" --format=raw | tr -d '\r')
+          echo "Deny rule matches (expect 0): $c"
+          test "$c" -eq 0

@@ -1,0 +1,27 @@
+# Secrets — never commit real credentials
+.env
+.env.*
+!**/env-templates/.env.staging.template
+!**/env-templates/.env.prod.template
+.env.local
+.env.*.local
+!.env.example
+
+node_modules/
+dist/
+dist-ssr/
+build/
+*.log
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/*
+!.vscode/extensions.json
+
+# Local DB
+*.db
+*.db-journal
+assignment.txt
+resources/*
+package-lock.json
+react-frontend/package-lock.json
