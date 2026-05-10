@@ -1,5 +1,6 @@
 # syntax=docker/dockerfile:1
-FROM node:20-alpine AS build
+# Public ECR mirrors avoid Docker Hub rate limits on GitHub-hosted runners.
+FROM public.ecr.aws/docker/library/node:20-alpine AS build
 WORKDIR /app
 
 COPY package.json ./
@@ -15,7 +16,7 @@ ENV VITE_ENV=$VITE_ENV
 
 RUN npm run build
 
-FROM nginx:1.26-alpine
+FROM public.ecr.aws/docker/library/nginx:1.26-alpine
 
 COPY nginx.conf /etc/nginx/conf.d/default.conf
 COPY --from=build /app/dist /usr/share/nginx/html
