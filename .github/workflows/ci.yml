@@ -45,6 +45,8 @@ jobs:
           name: coverage-lcov
           path: react-frontend/coverage/lcov.info
 
+  # Requires SonarCloud "Automatic Analysis" to be OFF for this project (otherwise scan exits with
+  # "CI analysis while Automatic Analysis is enabled"). See README → SonarCloud setup.
   sonarcloud:
     needs: test
     runs-on: ubuntu-latest
@@ -71,10 +73,10 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      # Install Trivy from GitHub releases (avoids aquasecurity/setup-trivy version resolution issues).
+      # Pin a real release tag (older tags like v0.57.1 may be removed → curl 404).
       - name: Install Trivy
         env:
-          TRIVY_VERSION: 0.57.1
+          TRIVY_VERSION: 0.70.0
         run: |
           set -e
           curl -fsSL "https://github.com/aquasecurity/trivy/releases/download/v${TRIVY_VERSION}/trivy_${TRIVY_VERSION}_Linux-64bit.tar.gz" \

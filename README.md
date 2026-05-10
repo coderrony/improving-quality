@@ -82,8 +82,11 @@ docker build ./react-frontend \
 2. **SonarCloud**: create project + generate token. Set repository secrets:
    - `SONAR_TOKEN`
    - Fill in `sonar.organization` and `sonar.projectKey` in [`sonar-project.properties`](sonar-project.properties) (or override via Sonar UI).
-3. Optional: `VITE_API_URL` secret if the built SPA must call a real API in CI.
-4. Upload **screenshots**: Actions tab (tests), Sonar dashboard (before/after), Trivy table from workflow log, k6 summary.
+3. **Important — CI scan vs Automatic Analysis:** If the `sonarcloud` job fails with *“You are running CI analysis while Automatic Analysis is enabled”*, pick **one** method:
+   - **Recommended (coverage from GitHub Actions):** In SonarCloud open the project → **Administration** → **Analysis Method** → **disable Automatic Analysis** and use **CI-based analysis** (this workflow). After the next successful run, Sonar should show **Coverage** from `lcov.info`.
+   - **Alternative:** Remove or skip the `sonarcloud` job and rely only on Automatic Analysis — then you will not upload coverage from Actions.
+4. Optional: `VITE_API_URL` secret if the built SPA must call a real API in CI.
+5. Upload **screenshots**: Actions tab (tests), Sonar dashboard (before/after), Trivy table from workflow log, k6 summary.
 
 ## Local commands
 
