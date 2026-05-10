@@ -71,26 +71,27 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
+      # Install Trivy from GitHub releases (avoids aquasecurity/setup-trivy version resolution issues).
+      - name: Install Trivy
+        env:
+          TRIVY_VERSION: 0.57.1
+        run: |
+          set -e
+          curl -fsSL "https://github.com/aquasecurity/trivy/releases/download/v${TRIVY_VERSION}/trivy_${TRIVY_VERSION}_Linux-64bit.tar.gz" \
+            | tar -xz -C /tmp
+          sudo mv /tmp/trivy /usr/local/bin/trivy
+          trivy --version
+
       - name: Trivy filesystem scan
-        uses: aquasecurity/trivy-action@v0.29.0
-        with:
-          scan-type: fs
-          scan-ref: ./react-frontend
-          severity: CRITICAL,HIGH,MEDIUM
-          exit-code: '0'
-          format: table
+        run: |
+          trivy fs --severity CRITICAL,HIGH,MEDIUM --exit-code 0 --format table ./react-frontend
 
       - name: Build Docker image for image scan
         run: docker build -t todo-frontend:ci ./react-frontend
 
       - name: Trivy image scan
-        uses: aquasecurity/trivy-action@v0.29.0
-        with:
-          scan-type: image
-          image-ref: todo-frontend:ci
-          severity: CRITICAL,HIGH,MEDIUM
-          exit-code: '0'
-          format: table
+        run: |
+          trivy image --severity CRITICAL,HIGH,MEDIUM --exit-code 0 --format table todo-frontend:ci
 
   opa-policy:
     runs-on: ubuntu-latest

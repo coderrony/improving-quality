@@ -1,5 +1,9 @@
 # Module 14 — Improving Quality, Security & Performance (CI/CD)
 
+[![Quality Gate Status](https://sonarcloud.io/api/project_badges/measure?project=coderrony_improving-quality&metric=alert_status)](https://sonarcloud.io/summary/new_code?id=coderrony_improving-quality)
+
+> If the badge shows **Quality gate not computed**, run a successful **`sonarcloud`** job in GitHub Actions once and ensure the **`SONAR_TOKEN`** repository secret is set.
+
 React + Vite todo UI with CI pipelines for testing, SonarCloud, Trivy, k6 load testing, and OPA policy checks.
 
 ## What was done
